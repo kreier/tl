@@ -2,20 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>PDF Background Website</title>
+  <title>PDF Viewer with Zoom & Pan</title>
   <style>
     body, html {
       margin: 0;
       padding: 0;
       height: 100%;
       overflow: hidden;
-      background: #fff;
+      background: #111;
+    }
+
+    #pdf-container {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      position: relative;
     }
 
     #pdf-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
+      display: block;
+      margin: 0 auto;
+      touch-action: none; /* important for pinch/zoom */
     }
 
     /* Floating buttons */
@@ -36,7 +43,9 @@
   </style>
 </head>
 <body>
-  <canvas id="pdf-canvas"></canvas>
+  <div id="pdf-container">
+    <canvas id="pdf-canvas"></canvas>
+  </div>
 
   <!-- Buttons -->
   <div id="settings" class="button">⚙️</div>
@@ -44,7 +53,10 @@
   <div id="search" class="button">🔍</div>
   <div id="darkmode" class="button">🌙</div>
 
+  <!-- Libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://unpkg.com/@panzoom/panzoom/dist/panzoom.min.js"></script>
+
   <script>
     const url = 'timeline_en.pdf'; // Replace with your PDF path
     const canvas = document.getElementById('pdf-canvas');
@@ -52,35 +64,31 @@
 
     pdfjsLib.getDocument(url).promise.then(pdf => {
       pdf.getPage(1).then(page => {
+        // Fit to height
+        const containerHeight = window.innerHeight;
         const viewport = page.getViewport({ scale: 1 });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        const scale = containerHeight / viewport.height;
+
+        const fitViewport = page.getViewport({ scale: scale });
+        canvas.width = fitViewport.width;
+        canvas.height = fitViewport.height;
 
         page.render({
           canvasContext: ctx,
-          viewport: viewport
+          viewport: fitViewport
+        }).promise.then(() => {
+          // Enable pan & zoom after rendering
+          const panzoom = Panzoom(canvas, {
+            maxScale: 1000, // allow huge zoom
+            minScale: 0.1,
+            contain: 'outside'
+          });
+
+          // Allow pinch zoom
+          canvas.parentElement.addEventListener('wheel', panzoom.zoomWithWheel);
         });
       });
     });
-
-    // Example zoom function
-    function zoom(scale) {
-      pdfjsLib.getDocument(url).promise.then(pdf => {
-        pdf.getPage(1).then(page => {
-          const viewport = page.getViewport({ scale: scale });
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-
-          page.render({
-            canvasContext: ctx,
-            viewport: viewport
-          });
-        });
-      });
-    }
-
-    // Zoom to 1000x
-    zoom(3);
   </script>
 </body>
 </html>
