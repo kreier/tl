@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PDF Background Website</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    #pdf-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* Floating buttons */
+    .button {
+      position: fixed;
+      padding: 10px;
+      border-radius: 50%;
+      background: #333;
+      color: white;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #settings { bottom: 20px; right: 20px; }
+    #menu { top: 20px; right: 20px; }
+    #search { bottom: 20px; left: 20px; }
+    #darkmode { top: 20px; left: 20px; }
+  </style>
+</head>
+<body>
+  <canvas id="pdf-canvas"></canvas>
+
+  <!-- Buttons -->
+  <div id="settings" class="button">⚙️</div>
+  <div id="menu" class="button">📋</div>
+  <div id="search" class="button">🔍</div>
+  <div id="darkmode" class="button">🌙</div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    const url = 'timeline_en.pdf'; // Replace with your PDF path
+    const canvas = document.getElementById('pdf-canvas');
+    const ctx = canvas.getContext('2d');
+
+    pdfjsLib.getDocument(url).promise.then(pdf => {
+      pdf.getPage(1).then(page => {
+        const viewport = page.getViewport({ scale: 1 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        page.render({
+          canvasContext: ctx,
+          viewport: viewport
+        });
+      });
+    });
+
+    // Example zoom function
+    function zoom(scale) {
+      pdfjsLib.getDocument(url).promise.then(pdf => {
+        pdf.getPage(1).then(page => {
+          const viewport = page.getViewport({ scale: scale });
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+
+          page.render({
+            canvasContext: ctx,
+            viewport: viewport
+          });
+        });
+      });
+    }
+
+    // Zoom to 1000x
+    zoom(3);
+  </script>
+</body>
+</html>
